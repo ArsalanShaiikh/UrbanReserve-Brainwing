@@ -1,7 +1,7 @@
 import { useLayoutEffect } from 'react'
-import { gsap, useGSAP, reduced, DRAWABLE } from '../gsap/gsapConfig'
+import { gsap, useGSAP, reduced, lite, DRAWABLE } from '../gsap/gsapConfig'
 import { introDelay, useNav } from '../app/nav'
-import { holdWhileGated } from '../app/gate'
+import { holdIntro } from '../app/gate'
 
 /**
  * Standard entrance for a screen, timed to start as the curtain clears:
@@ -24,9 +24,9 @@ export function useIntro(scope, build) {
       if (masks.length) tl.fromTo(masks, { clipPath: 'inset(100% 0% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.5, stagger: 0.12, ease: 'expo.inOut' }, 0)
       if (ins.length) tl.from(ins, { y: 34, autoAlpha: 0, duration: 1.2, stagger: 0.06 }, 0.15)
       if (lines.length) tl.from(lines, { drawSVG: 0, duration: 2.4, stagger: { amount: 1.2 }, ease: 'power2.inOut' }, 0.2)
-      if (fills.length) tl.from(fills, { fillOpacity: 0, duration: 1.6, stagger: { amount: 1.2 }, ease: 'power1.inOut' }, 1.5)
+      if (fills.length) tl.from(fills, { fillOpacity: 0, duration: 1.6, stagger: { amount: 1.2 }, ease: 'power1.inOut' }, lite() ? 0.3 : 1.5)
       build?.(tl)
-      holdWhileGated(tl)
+      holdIntro(tl)
     },
     { scope },
   )
@@ -43,7 +43,7 @@ export function playIn(el, delay = 0) {
   if (masks.length) tl.fromTo(masks, { clipPath: 'inset(100% 0% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.3, stagger: 0.1, ease: 'expo.inOut' }, 0)
   if (ins.length) tl.fromTo(ins, { y: 30, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1.1, stagger: 0.055 }, 0.1)
   if (lines.length) tl.fromTo(lines, { drawSVG: 0 }, { drawSVG: '100%', duration: 2.2, stagger: { amount: 1 }, ease: 'power2.inOut' }, 0.15)
-  if (fills.length) tl.fromTo(fills, { fillOpacity: 0 }, { fillOpacity: 1, duration: 1.5, stagger: { amount: 1 }, ease: 'power1.inOut' }, 1.3)
+  if (fills.length) tl.fromTo(fills, { fillOpacity: 0 }, { fillOpacity: 1, duration: 1.5, stagger: { amount: 1 }, ease: 'power1.inOut' }, lite() ? 0.3 : 1.3)
   return tl
 }
 

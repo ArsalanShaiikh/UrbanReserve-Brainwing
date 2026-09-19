@@ -42,7 +42,7 @@ function Welcome() {
   const w = OVERVIEW.welcome
   return (
     <div className="absolute inset-0 bg-forest-950 text-ivory">
-      <img data-kb src={w.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      <img data-kb src={w.image} alt="" className="absolute inset-0 h-full w-full object-cover will-change-transform" />
       <div className="absolute inset-0 bg-linear-to-r from-forest-950/25 via-forest-950/40 to-forest-950/85" />
       <Botanical kind="monstera" seed={5} depth={-18} className="bottom-0 right-0 w-[15vw] -scale-x-100 text-gold/35" />
       <div className="safe pane relative grid h-full items-center gap-[5vw] [align-content:safe_center] lg:grid-cols-2">
@@ -163,7 +163,7 @@ function Lobby() {
   return (
     <div className="absolute inset-0 grid grid-rows-[1.2fr_1fr] bg-sand text-ivory lg:grid-cols-[1.55fr_1fr] lg:grid-rows-1">
       <div data-mask className="relative overflow-hidden">
-        <img data-kb src={l.image} alt="The arrival lobby" className="absolute inset-0 h-full w-full object-cover" />
+        <img data-kb src={l.image} alt="The arrival lobby" className="absolute inset-0 h-full w-full object-cover will-change-transform" />
         <div className="absolute inset-0 bg-linear-to-b from-forest-950/35 via-transparent to-forest-950/55" />
       </div>
       <div className="relative">

@@ -17,12 +17,18 @@ React 19 + Vite, Tailwind v4 (theme tokens in `src/index.css`), GSAP with `@gsap
 | Path | What |
 | --- | --- |
 | `src/data/content.js` | All copy, images, plans, amenities, specs, contact details and panoramas |
-| `src/app/` | Hash routing, the transition director (`Navigator.jsx`), the curtain and the chrome |
+| `src/app/` | Routing and transitions (`Navigator.jsx`), the curtain and the chrome. React Router owns the URL; the curtain decides when the screen swaps |
 | `src/screens/` | One file per screen |
 | `src/art/` | Brand art: vector logo, `Terrain` (the cover's real torn edge), `Botanical`s traced from the brochure, `SunBirds` |
 | `src/app/FullscreenGate.jsx` | The full-screen gate. The app only runs in full screen, and the gate returns when you leave it |
 | `src/hooks/useIntro.js` | Shared entrance animation: `data-in`, `data-mask` and `data-draw` attributes |
 | `src/brand/*.svg` | Logo mark and lockup, extracted as vectors from page 1 of the brochure |
+
+## Routes and hosting
+
+Each screen has its own path: `/`, `/menu`, `/overview`, `/residences`, `/amenities`, `/views`, `/location`, `/specifications` and `/enquire`. Anything else redirects to `/`.
+
+Because these are real paths, the host must serve `index.html` for every route, or deep links and page reloads will return 404. `npm run dev` and `npm run preview` already do this. Netlify needs `/* /index.html 200` in `public/_redirects`. Vercel needs a rewrite of `/(.*)` to `/index.html`.
 
 ## Responsive scaling
 

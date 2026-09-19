@@ -1,6 +1,8 @@
 import { forwardRef, useImperativeHandle, useRef } from 'react'
 import { gsap, reduced } from '../gsap/gsapConfig'
 import Terrain from '../art/Terrain'
+import { settled } from './decode'
+import { setCovered } from './gate'
 import { Mark } from '../art/Brand'
 
 const Sheet = forwardRef(function Sheet({ tone, seed, children }, ref) {
@@ -19,6 +21,19 @@ function parked(el, side) {
   return side > 0 ? window.innerHeight + edge + 2 : edge - el.offsetHeight - 2
 }
 
+// Mounting the next screen is the one heavy moment of a transition. It happens while the page is
+// fully covered, and the reveal only starts once that work and its image decodes are finished,
+// so the curtain never jumps to catch up.
+function hold(tl, onSwap, ready) {
+  tl.pause()
+  setCovered('curtain', true)
+  onSwap()
+  settled(ready).then(() => {
+    setCovered('curtain', false)
+    tl.resume()
+  })
+}
+
 const Curtain = forwardRef(function Curtain(_, ref) {
   const ember = useRef(null)
   const forest = useRef(null)
@@ -26,14 +41,15 @@ const Curtain = forwardRef(function Curtain(_, ref) {
 
   useImperativeHandle(ref, () => ({
     // dir 1 sweeps upward (going deeper), -1 sweeps downward (going back)
-    sweep(dir, onSwap) {
+    // `ready` resolves when the destination's images are decoded; the reveal waits for it
+    sweep(dir, onSwap, ready = Promise.resolve()) {
       const sheets = [ember.current, forest.current]
       gsap.killTweensOf([...sheets, mark.current])
       const tl = gsap.timeline()
       if (reduced()) {
         tl.set(forest.current, { y: 0, autoAlpha: 0 })
           .to(forest.current, { autoAlpha: 1, duration: 0.35, ease: 'none' })
-          .add(onSwap)
+          .add(() => hold(tl, onSwap, ready))
           .to(forest.current, { autoAlpha: 0, duration: 0.45, ease: 'none' })
         return tl
       }
@@ -43,7 +59,7 @@ const Curtain = forwardRef(function Curtain(_, ref) {
         .to(ember.current, { y: 0, duration: D, ease: 'sweepIn' }, 0)
         .to(forest.current, { y: 0, duration: D, ease: 'sweepIn' }, 0.1)
         .to(mark.current, { autoAlpha: 1, scale: 1, duration: 0.6, ease: 'power2.out' }, 0.3)
-        .add(onSwap)
+        .add(() => hold(tl, onSwap, ready))
         .to(forest.current, { y: (i, el) => parked(el, -dir), duration: D, ease: 'sweepOut' })
         .to(ember.current, { y: (i, el) => parked(el, -dir), duration: D, ease: 'sweepOut' }, '<0.1')
         .set(sheets, { autoAlpha: 0 })

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fullscreenSupported as supported, isFullscreen as isFull, setGated } from './gate'
+import { fullscreenSupported as supported, isFullscreen as isFull, setCovered } from './gate'
 import { Mark } from '../art/Brand'
 import Botanical from '../art/Botanical'
 import Terrain from '../art/Terrain'
@@ -35,7 +35,7 @@ export default function FullscreenGate() {
     }
   }, [])
 
-  useEffect(() => setGated(open), [open])
+  useEffect(() => setCovered('fullscreen', open), [open])
 
   useEffect(() => {
     if (!open) return

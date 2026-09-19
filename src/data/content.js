@@ -262,3 +262,17 @@ export const SPEC_IMAGE = img('tower-dusk')
 
 // Equirectangular (2:1) panoramas: { id, label, src }. Empty until renders arrive.
 export const PANORAMAS = []
+
+// Images decoded behind the curtain before each screen is revealed.
+const I = (...names) => names.map(img)
+export const ROUTE_IMAGES = {
+  landing: [LANDING.image],
+  menu: [...SECTIONS.map((s) => s.preview), ENQUIRE_PREVIEW],
+  overview: [...I('forest', 'plant', 'leaf-texture', 'tower-day', 'tower-dusk', 'lobby', 'sun-felt')],
+  residences: [RESIDENCES[0].plan, RESIDENCES[0].key],
+  amenities: [AMENITY_LEVELS[0].plan, ...AMENITY_LEVELS[0].photos.map((p) => p.image)],
+  views: [],
+  location: [LOCATION.map],
+  specifications: [SPEC_IMAGE],
+  enquire: [],
+}

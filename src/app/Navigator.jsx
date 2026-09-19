@@ -1,38 +1,53 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Curtain from './Curtain'
-import { NavContext, direction, fromHash, hashFor, isPage, setIntroDelay } from './nav'
+import { NavContext, direction, idFor, isPage, pathFor, setIntroDelay } from './nav'
+import { decodeImages } from './decode'
+import { ROUTE_IMAGES } from '../data/content'
 
-// One transition at a time; a request made mid-sweep is queued (latest wins) and runs right after.
-function createDirector(initial, setRoute) {
+/**
+ * React Router owns the URL; this owns *when* the screen changes. A new location starts a curtain
+ * sweep, and the rendered location (`shown`) only switches while the curtain covers the page.
+ * One sweep runs at a time; locations arriving mid-sweep are queued (latest wins).
+ */
+function createDirector(initialId, setShown) {
   const d = {
-    current: initial,
-    lastPage: isPage(initial) ? initial : null,
+    current: initialId,
+    lastPage: isPage(initialId) ? initialId : null,
     busy: false,
-    curtain: null,
     queued: null,
-    attach(c) {
-      d.curtain = c
-    },
-    run(to, push) {
-      if (to === d.current && !d.busy) return
+    curtain: null,
+    run(location) {
+      const to = idFor(location.pathname)
+      if (!to) return
       if (d.busy) {
-        d.queued = { to, push }
+        d.queued = location
+        return
+      }
+      if (to === d.current) {
+        setShown(location)
         return
       }
       d.busy = true
-      if (push) window.history.pushState(null, '', hashFor(to))
-      const tl = d.curtain.sweep(direction(d.current, to), () => {
-        setIntroDelay(0.22)
-        d.current = to
-        if (isPage(to)) d.lastPage = to
-        flushSync(() => setRoute(to))
-      })
+      // the menu's preview panel is desktop-only, so phones skip decoding its seven photos
+      const desktop = window.matchMedia('(min-width: 64rem) and (orientation: landscape)').matches
+      const ready = decodeImages(to === 'menu' && !desktop ? [] : (ROUTE_IMAGES[to] ?? []))
+      const tl = d.curtain.sweep(
+        direction(d.current, to),
+        () => {
+          setIntroDelay(0.22)
+          d.current = to
+          if (isPage(to)) d.lastPage = to
+          flushSync(() => setShown(location))
+        },
+        ready,
+      )
       tl.eventCallback('onComplete', () => {
         d.busy = false
         const next = d.queued
         d.queued = null
-        if (next && next.to !== d.current) d.run(next.to, next.push)
+        if (next) d.run(next)
       })
     },
   }
@@ -40,38 +55,49 @@ function createDirector(initial, setRoute) {
 }
 
 export default function Navigator({ children }) {
-  const [route, setRoute] = useState(fromHash)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [shown, setShown] = useState(location)
   const [tone, setTone] = useState('dark')
   const curtain = useRef(null)
   const director = useRef(null)
 
   useEffect(() => {
-    const d = createDirector(fromHash(), setRoute)
-    d.attach(curtain.current)
+    const d = createDirector(idFor(window.location.pathname) ?? 'landing', setShown)
+    d.curtain = curtain.current
     director.current = d
-    const onPop = () => d.run(fromHash(), false)
+    // warm the likely next screens while the visitor is on the first one
+    const warm = setTimeout(() => ['landing', 'overview'].forEach((r) => decodeImages(ROUTE_IMAGES[r])), 1200)
+    return () => clearTimeout(warm)
+  }, [])
+
+  useEffect(() => {
+    director.current?.run(location)
+  }, [location])
+
+  const route = idFor(shown.pathname) ?? 'landing'
+
+  useEffect(() => {
     const onKey = (e) => {
       if (e.key !== 'Escape' || e.defaultPrevented) return
-      if (isPage(d.current)) d.run('menu', true)
-      else if (d.current === 'menu') d.run(d.lastPage ?? 'landing', true)
+      const d = director.current
+      if (isPage(d.current)) navigate(pathFor('menu'))
+      else if (d.current === 'menu') navigate(pathFor(d.lastPage ?? 'landing'))
     }
-    window.addEventListener('popstate', onPop)
     window.addEventListener('keydown', onKey)
-    return () => {
-      window.removeEventListener('popstate', onPop)
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [])
+    return () => window.removeEventListener('keydown', onKey)
+  }, [navigate])
 
   const value = useMemo(
     () => ({
       route,
+      shown,
       tone,
       setTone,
-      go: (to) => director.current?.run(to, true),
+      go: (id) => navigate(pathFor(id)),
       lastPage: () => director.current?.lastPage ?? null,
     }),
-    [route, tone],
+    [route, shown, tone, navigate],
   )
 
   return (

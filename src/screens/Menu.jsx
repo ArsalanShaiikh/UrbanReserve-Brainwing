@@ -79,7 +79,7 @@ export default function Menu() {
         <Terrain side="left" seed={29} amp={70} className="absolute inset-y-0 left-0 h-full w-[4.2vw] text-forest-900" />
         <div className="absolute inset-y-0 left-[4.1vw] right-0 overflow-hidden bg-forest-900">
           {ITEMS.map((s) => (
-            <img key={s.id} data-preview src={s.preview} alt="" className="invisible absolute inset-0 h-full w-full object-cover" />
+            <img key={s.id} data-preview src={s.preview} alt="" loading="lazy" decoding="async" className="invisible absolute inset-0 h-full w-full object-cover" />
           ))}
           <div className="absolute inset-0 bg-linear-to-t from-forest-950/90 via-forest-950/10 to-forest-950/30" />
           <Botanical kind="umbel" seed={3} depth={-12} className="right-0 top-[9%] w-[30%] text-gold/45" />

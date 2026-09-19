@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { gsap, useGSAP, reduced } from '../gsap/gsapConfig'
+import { gsap, useGSAP, reduced, lite } from '../gsap/gsapConfig'
 import { rng } from './rng'
 import ART from './botanicalPaths'
 
@@ -15,18 +15,20 @@ const ORIGIN = {
 
 /**
  * Line art vectorised from the brochure (scripts/trace-botanicals.mjs).
- * The screen intro draws its outline (`data-draw`), then fills it (`data-fill`);
- * it sways gently and drifts with the cursor by `depth` px.
+ * The screen intro draws its outline (`data-draw`), then fills it (`data-fill`); touch devices
+ * skip the outline pass. The sway rotates a composited HTML layer so the complex path is
+ * rasterised once rather than every frame.
  */
 export default function Botanical({ kind, seed = 1, depth = 14, sway = 2, className = '' }) {
-  const g = useRef(null)
+  const layer = useRef(null)
   const { w, h, d } = ART[kind]
+  const drawn = !lite()
 
   useGSAP(() => {
     if (!sway || reduced()) return
     const r = rng(seed * 31)
     gsap.fromTo(
-      g.current,
+      layer.current,
       { rotation: -sway * 0.5 },
       {
         rotation: sway * 0.5,
@@ -42,14 +44,16 @@ export default function Botanical({ kind, seed = 1, depth = 14, sway = 2, classN
 
   return (
     <div className={`drift pointer-events-none absolute ${className}`} style={{ '--d': depth }} aria-hidden="true">
-      <svg viewBox={`0 0 ${w} ${h}`} className="block h-auto w-full overflow-visible">
-        <g ref={g}>
+      <div ref={layer} className="will-change-transform">
+        <svg viewBox={`0 0 ${w} ${h}`} className="block h-auto w-full overflow-visible">
           <path data-fill d={d} fill="currentColor" fillRule="evenodd" />
-          <g data-draw fill="none" stroke="currentColor" strokeWidth={w / 520} strokeLinejoin="round">
-            <path d={d} />
-          </g>
-        </g>
-      </svg>
+          {drawn && (
+            <g data-draw fill="none" stroke="currentColor" strokeWidth={w / 520} strokeLinejoin="round">
+              <path d={d} />
+            </g>
+          )}
+        </svg>
+      </div>
     </div>
   )
 }

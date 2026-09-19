@@ -9,6 +9,13 @@ export const ROUTES = ['landing', 'menu', ...SECTION_IDS, 'enquire']
 
 export const isPage = (id) => id !== 'landing' && id !== 'menu'
 
+export const pathFor = (id) => (id === 'landing' ? '/' : `/${id}`)
+
+export function idFor(pathname) {
+  const id = pathname.replace(/^\/+|\/+$/g, '') || 'landing'
+  return ROUTES.includes(id) ? id : null
+}
+
 const depth = (id) => (id === 'landing' ? 0 : id === 'menu' ? 1 : 2)
 
 export function direction(from, to) {
@@ -16,13 +23,6 @@ export function direction(from, to) {
   if (d) return Math.sign(d)
   return ROUTES.indexOf(to) >= ROUTES.indexOf(from) ? 1 : -1
 }
-
-export function fromHash() {
-  const id = window.location.hash.replace(/^#\/?/, '')
-  return ROUTES.includes(id) ? id : 'landing'
-}
-
-export const hashFor = (id) => (id === 'landing' ? '#/' : `#/${id}`)
 
 // Screens read this once on mount so their intro starts as the curtain clears.
 let delay = 0.15

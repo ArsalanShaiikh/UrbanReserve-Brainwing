@@ -1,11 +1,15 @@
 import { useId, useRef } from 'react'
-import { gsap, useGSAP, reduced } from '../gsap/gsapConfig'
+import { gsap, useGSAP, reduced, lite } from '../gsap/gsapConfig'
 import { rng } from './rng'
-import { holdWhileGated } from '../app/gate'
+import { holdIntro } from '../app/gate'
 
 const BODY = 'M8 34C30 30 60 30 96 21C84 29 64 36 44 38C30 39 18 38 8 34Z'
 const WING = 'M42 34C36 22 22 9 2 2C20 5 40 13 60 31C54 33 48 34 42 34Z'
 const ROOT = '50 33'
+// A baked relief shadow is a copy of the bird offset down-right; a live CSS drop-shadow would
+// be re-filtered on every wing beat.
+const SHADOW = [1.2, 2.4]
+const SHADOW_ROOT = `${50 + SHADOW[0]} ${33 + SHADOW[1]}`
 
 // Positions sampled from the brochure's breaker page (x%, y%, width%, depth).
 const FLOCK = [
@@ -29,11 +33,12 @@ export default function SunBirds({ className = '', autoplay = true }) {
     () => {
       if (reduced()) return
       const r = rng(9)
-      gsap.to(`#${gid}`, { attr: { gradientTransform: 'translate(0.6 0)' }, duration: 5, ease: 'sine.inOut', yoyo: true, repeat: -1 })
+      // the foil shimmer repaints every bird each frame, so it is desktop-only
+      if (!lite()) gsap.to(`#${gid}`, { attr: { gradientTransform: 'translate(0.6 0)' }, duration: 5, ease: 'sine.inOut', yoyo: true, repeat: -1 })
       gsap.utils.toArray('[data-bird]', root.current).forEach((b, i) => {
-        gsap.to(b.querySelector('[data-wing]'), {
+        gsap.to(b.querySelectorAll('[data-wing]'), {
           scaleY: 0.3,
-          svgOrigin: ROOT,
+          svgOrigin: (k, el) => (el.closest('[data-shadow]') ? SHADOW_ROOT : ROOT),
           duration: 0.5 + r() * 0.3,
           ease: 'sine.inOut',
           yoyo: true,
@@ -53,7 +58,7 @@ export default function SunBirds({ className = '', autoplay = true }) {
         })
       })
       if (autoplay) {
-        holdWhileGated(
+        holdIntro(
           gsap
             .timeline({ delay: 0.25 })
             .from('[data-sun]', { scale: 0.86, autoAlpha: 0, duration: 1.8 })
@@ -82,7 +87,7 @@ export default function SunBirds({ className = '', autoplay = true }) {
       <div className="drift absolute left-[13.4%] top-[9.1%] w-[74%]" style={{ '--d': 8 }}>
         <div
           data-sun
-          className="relative aspect-square rounded-full"
+          className="relative aspect-square rounded-full will-change-transform"
           style={{
             backgroundImage: 'url(/assets/img/sun-felt.webp)',
             backgroundSize: '36%',
@@ -102,13 +107,14 @@ export default function SunBirds({ className = '', autoplay = true }) {
 
       {FLOCK.map(([x, y, w, d], i) => (
         <div key={i} className="drift absolute" style={{ left: `${x}%`, top: `${y}%`, width: `${w * 1.35}%`, '--d': d }}>
-          <div data-flight>
-            <svg
-              data-bird
-              viewBox="0 0 100 44"
-              className="block w-full -translate-x-1/2 -translate-y-1/2 overflow-visible"
-              style={{ filter: 'drop-shadow(0 2px 1.5px rgb(70 25 0 / 0.45)) drop-shadow(0 0 0.5px rgb(90 60 10 / 0.6))' }}
-            >
+          <div data-flight className="will-change-transform">
+            <svg data-bird viewBox="0 0 100 44" className="block w-full -translate-x-1/2 -translate-y-1/2 overflow-visible">
+              <g data-shadow transform={`translate(${SHADOW.join(' ')})`} fill="rgb(70 25 0 / 0.4)">
+                <g transform="rotate(-10 50 30)">
+                  <path d={BODY} />
+                  <path data-wing d={WING} />
+                </g>
+              </g>
               <g transform="rotate(-10 50 30)" fill={`url(#${gid})`}>
                 <path d={BODY} />
                 <path data-wing d={WING} />
